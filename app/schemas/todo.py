@@ -13,3 +13,7 @@ class TodoOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TodoUpdate(BaseModel):
+    title: Optional[str] = None
+    task: Optional[str] = None
