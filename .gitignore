@@ -4,4 +4,4 @@ venv
 __pycache__
 test.db
 alembic.ini
-alembic/
+alembic
