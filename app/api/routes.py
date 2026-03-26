@@ -30,7 +30,7 @@ def login(user: UserCreate, db: Session = Depends(get_db)):
 def create(todo: TodoCreate,
            db: Session = Depends(get_db),
            current_user=Depends(get_current_user)):
-    return crud_todo.create_todo(db, todo.title, todo.task, current_user.id)
+    return crud_todo.create_todo(db, todo.title, todo.task, current_user.id, todo.priority)
 
 
 @router.get("/todos", response_model=list[TodoOut])
