@@ -1,5 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
+
+from app.models.todo import Todo, PriorityEnum
 from app.schemas.user import UserCreate
 from app.schemas.todo import TodoCreate, TodoOut, TodoUpdate
 from app.crud import user as crud_user
@@ -30,7 +34,14 @@ def login(user: UserCreate, db: Session = Depends(get_db)):
 def create(todo: TodoCreate,
            db: Session = Depends(get_db),
            current_user=Depends(get_current_user)):
-    return crud_todo.create_todo(db, todo.title, todo.task, current_user.id, todo.priority)
+    return crud_todo.create_todo(
+        db,
+        todo.title,
+        todo.task,
+        current_user.id,
+        todo.priority,
+        todo.due_date
+    )
 
 
 @router.get("/todos", response_model=list[TodoOut])
@@ -41,7 +52,7 @@ def read(db: Session = Depends(get_db),
     if not todos:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No todos found. All done 🎉"
+            detail="No todos found."
         )
     return todos
 
@@ -81,3 +92,32 @@ def toggle_todo_api(
         raise HTTPException(status_code=404, detail="Todo not found")
 
     return updated
+
+@router.get("/todos/search", response_model=list[TodoOut])
+def search_todos(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+    q: Optional[str] = Query(None, description="Search term in title or task"),
+    priority: Optional[PriorityEnum] = None,
+    completed: Optional[bool] = None
+):
+    query = db.query(Todo).filter(Todo.owner_id == current_user.id)
+
+    if q:
+        query = query.filter(
+            (Todo.title.ilike(f"%{q}%")) |
+            (Todo.task.ilike(f"%{q}%"))
+        )
+    if priority:
+        query = query.filter(Todo.priority == priority)
+    if completed is not None:
+        query = query.filter(Todo.completed == completed)
+
+    return query.all()
+
+@router.get("/todos/stats")
+def todos_stats(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    total = db.query(Todo).filter(Todo.owner_id == current_user.id).count()
+    completed = db.query(Todo).filter(Todo.owner_id == current_user.id, Todo.completed == True).count()
+    pending = total - completed
+    return {"total": total, "completed": completed, "pending": pending}
