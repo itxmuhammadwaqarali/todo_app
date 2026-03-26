@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.schemas.user import UserCreate
 from app.schemas.todo import TodoCreate, TodoOut, TodoUpdate
@@ -36,7 +36,14 @@ def create(todo: TodoCreate,
 @router.get("/todos", response_model=list[TodoOut])
 def read(db: Session = Depends(get_db),
          current_user=Depends(get_current_user)):
-    return crud_todo.get_todos(db, current_user.id)
+    todos = crud_todo.get_todos(db, current_user.id)
+
+    if not todos:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No todos found. All done 🎉"
+        )
+    return todos
 
 
 @router.patch("/todos/{todo_id}", response_model=TodoOut)
