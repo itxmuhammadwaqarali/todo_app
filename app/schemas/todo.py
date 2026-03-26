@@ -1,16 +1,19 @@
-from pydantic import BaseModel
 from typing import Optional
+from pydantic import BaseModel
+from app.models.todo import PriorityEnum
 import uuid
 
 class TodoCreate(BaseModel):
     title: str
-    task: str
+    task: Optional[str] = ""
+    priority: Optional[PriorityEnum] = PriorityEnum.medium
 
 class TodoOut(BaseModel):
     id: uuid.UUID
     title: str
     task: Optional[str]
     completed: bool
+    priority: PriorityEnum
 
     class Config:
         from_attributes = True
@@ -18,3 +21,5 @@ class TodoOut(BaseModel):
 class TodoUpdate(BaseModel):
     title: Optional[str] = None
     task: Optional[str] = None
+    completed: Optional[bool] = None
+    priority: Optional[PriorityEnum] = None
