@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from passlib.context import CryptContext
+from uuid import UUID
 
 SECRET_KEY = "supersecretkey"
 ALGORITHM = "HS256"
@@ -23,7 +24,7 @@ def create_access_token(data: dict):
     to_encode = data.copy()
     # Convert any UUID objects to strings for JSON serialization
     for key, value in to_encode.items():
-        if hasattr(value, '__class__') and value.__class__.__name__ == 'UUID':
+        if isinstance(value, UUID):
             to_encode[key] = str(value)
     
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
